@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% block navbar %}
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">TuneBoss</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{ user.first_name }} <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="#">Profile</a></li>
+                <li><a href="{% url 'auth_logout' %}?next={{ request.path|urlencode }}">Logout</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+{% endblock navbar %}
+
+
+
+{% block content %}
+
+    <div>
+
+        {% if not user.is_authenticated %}
+
+        <div class="inner_content">
+
+            <!--form to call registration via facebook -->
+            <form action="{% url 'facebook_connect' %}" method="post">
+                <h2>Register or login with Facebook</h2>
+                <br />
+                {% csrf_token %}
+                <input type="hidden" value="/home/" name="next" />
+
+                <!--
+                use error next for a seperate error page
+                <input type="hidden" value="/error/" name="error_next" />
+                -->
+                <div id="facebook_login_js">
+                <input onclick="F.connect(this.parentNode.parentNode); return false;" type="image" src="{{ STATIC_URL }}django_facebook/images/facebook_login.png" /><br />
+                </div>
+            </form>
+
+            You are not logged in, Please login by clicking the button above.
+
+        </div>
+
+        {% endif %}
+
+
+        <div id="header_bar">
+
+        {% if user.is_authenticated %}
+            <h1>Welcome to TuneBoss</h1>
+            <br />
+
+            {% if form %}
+            <form action="/home/" method="post">
+              <div class="form-group">
+                {% csrf_token %}
+                {{ form }}
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+            {% endif %}
+
+              <div class="row">
+                <div class="col-xs-4">
+                <h3>Playlists</h3>
+                  <table class="table table-condensed playlist-list">
+                    <tbody>
+                      {% for clientlist in user_clientlists %}
+                      <tr>
+                        <td>
+                          <a href="{% url "clientlist" clientlist_id=clientlist.id %}">{{ clientlist.name }}</a>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="col-xs-4">
+                  {% block player %}
+                  {% endblock player %}
+
+                  {% block clientlist %}
+                  {% endblock clientlist %}
+                </div>
+
+                <div class="col-xs-4">
+                <h3>Listening History</h3>
+                  <table class="table table-condensed listening-history">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Artist</th>
+                        <th>Play</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for listen in user_listens %}
+                      <tr>
+                        <td style="display:none;">{{ listen.0 }}</td>
+                        <td>{{ listen.1 }}</td>
+                        <td>{{ listen.2 }}</td>
+                        <td style="display:none;">{{ listen.0 }}</td>
+                        <td>
+                          <a href="#" class="playlink">Play</a>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+
+          
+
+            
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% endblock content %}
+
+{% block scripts %}
+
+{% endblock scripts %}
+

@@ -1,0 +1,93 @@
+{% extends "home.html" %}
+
+{% block player %}
+
+
+  
+		<iframe id="player" src="https://embed.spotify.com/?uri=spotify:user:{{ clientlist.client_owner }}:playlist:{{ clientlist.client_unique }}" width="300" height="380" frameborder="0" allowtransparency="true"></iframe>
+
+
+{% endblock player %}
+
+
+{% block clientlist %}
+
+  <h3>{{ clientlist.name }}</h3>
+  <table class="table table-condensed clientlist-tracks-list">
+    <thead>
+      <tr>
+        <th>Score</th>
+        <th>Name</th>
+        <th>Artist</th>
+        <th>Play</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for track in clientlist.tracks.all %}
+      <tr>
+        <td class="client_unique" style="display:none;">{{ track.client_unique }}</td>
+        <td>Score</td>
+        <td>{{ track.name }}</td>
+        <td>{{ track.artist_name }}</td>
+        <td class="client_unique" style="display:none;">{{ track.client_unique }}</td>
+        <td>
+        	<a href="#" class="playlink">Play</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+{% endblock clientlist %}
+
+{% block scripts %}
+
+<script type="text/javascript">
+  function trackIds(track_link) {
+    tracks = ""
+    this_unique = track_link.parentElement.previousElementSibling.innerHTML
+    this_track = track_link.parentNode.parentNode
+    next_track = track_link.parentNode.parentNode.nextElementSibling
+    prev_track = track_link.parentNode.parentNode.previousElementSibling
+    tracks = tracks.concat(this_unique,",")
+
+    node = next_track;
+
+    while( node && node.nodeType === 1 && node !== this ) {
+        unique = node.childNodes[1].innerHTML
+        tracks = tracks.concat(unique,",")
+        node = node.nextElementSibling || node.nextSibling;
+    }
+
+    node = prev_track;
+
+    while( node && node.nodeType === 1 && node !== this ) {
+        unique = node.childNodes[1].innerHTML
+        tracks = tracks.concat(unique,",")
+        node = node.previousElementSibling || node.previousSibling;
+    }
+    tracks = tracks.substring(0, tracks.length - 1);
+    console.log(tracks)
+    return tracks
+  }
+
+
+  $(".playlink").click(function() {
+    html_template = "https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:"
+    console.log(html_template)
+    
+    tracks = trackIds(this)
+    new_src = html_template.concat(tracks)
+    console.log(new_src)
+    document.getElementById("player").src=new_src;
+    return false;
+  });
+
+
+</script>
+
+
+
+{% endblock scripts %}

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% block navbar %}
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">TuneBoss</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{ user.first_name }} <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="#">Profile</a></li>
+                <li><a href="{% url 'auth_logout' %}?next={{ request.path|urlencode }}">Logout</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+{% endblock navbar %}
+
+
+
+{% block content %}
+{% if request.GET.fb_error_or_cancel or request.GET.error %}
+        <div class="error">
+            Please click allow in the facebook interface, to access TuneBoss
+        </div>
+    {% endif %}
+
+    <div class="error" id="django_static_error">
+        Couldn't load the static Javascript files, is django static configured correctly?
+        <a href="http://docs.djangoproject.com/en/1.3/howto/static-files/" target="_blank">See the docs here.</a>
+    </div>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div>
+
+        {% if not user.is_authenticated %}
+
+        <div class="inner_content">
+
+            <!--form to call registration via facebook -->
+            <form action="{% url 'facebook_connect' %}" method="post">
+                <h2>Register or login with Facebook</h2>
+                <br />
+                {% csrf_token %}
+                <input type="hidden" value="/get-spotify-username/" name="next" />
+
+                <!--
+                use error next for a seperate error page
+                <input type="hidden" value="/error/" name="error_next" />
+                -->
+                <div id="facebook_login_js">
+                <input onclick="F.connect(this.parentNode.parentNode); return false;" type="image" src="{{ STATIC_URL }}django_facebook/images/facebook_login.png" /><br />
+                </div>
+            </form>
+
+            You are not logged in, Please login by clicking the button above.
+
+        </div>
+
+        {% endif %}
+
+
+        <div id="header_bar">
+
+        {% if user.is_authenticated %}
+            <h1>Welcome to TuneBoss</h1>
+            <br />
+
+            <form>
+              <div class="form-group">
+                <label for="exampleInputEmail1">Spotify Username</label>
+                <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter username">
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+
+            <a href="/get-spotify-username/">Spotify</a>
+
+
+            {% if playlists %}
+            <ol class="playlists">
+                {% for playlist in playlists %}
+                <li id="playlist_{{ forloop.counter }}">
+                    {{ playlist }}
+                </li>
+                {% endfor %}
+            </ol>
+            {% endif %}
+
+
+
+            <table id="rounded-corner">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>First Name:</td><td>{{ user.first_name }}</td>
+                </tr>
+                <tr>
+                    <td>Last Name:</td><td>{{ user.last_name }}</td>
+                </tr>
+                <tr>
+                    <td>Gender:</td><td>{{ user.profile_or_self.gender }}</td>
+                </tr>
+                <tr>
+                    <td>About me:</td><td>{{ user.profile_or_self.about_me }}</td>
+                </tr>
+                <tr>
+                    <td>Facebook profile url:</td><td>{{ user.profile_or_self.facebook_profile_url }}</td>
+                </tr>
+                <tr>
+                    <td>Facebook ID:</td><td>{{ user.profile_or_self.facebook_id }}</td>
+                </tr>
+                <tr>
+                    <td>Date of Birth:</td><td>{{ user.profile_or_self.date_of_birth }}</td>
+                </tr>
+                <tr>
+                    <td>Website Url:</td><td>{{ user.profile_or_self.website_url }}</td>
+                </tr>
+                {% if user.profile_or_self.image %}
+                <tr>
+                    <td>Local Image:</td><td><img src="{{ user.profile_or_self.image.url }}" title="local copy" /></td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td>Hotlinked Image:</td><td><img src="http://graph.facebook.com/{{ user.profile_or_self.facebook_id }}/picture?type=large" title="facebook stored image" /><br /></td>
+                </tr>
+                <tr>
+                    <td>Likes:</td>
+                    <td>
+                        <ul>
+                        {% for like in user.profile_or_self.likes|slice:":5" %}
+                            <li>{{ like.name }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Friends:</td>
+                    <td>
+                        <ul>
+                        {% for friend in user.profile_or_self.friends|slice:":5" %}
+                            <li>{{ friend.name }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Getting More:</td><td>Facebook has a ton more data, read about it <a href="https://developers.facebook.com/docs/reference/api/">here</a>.</td>
+                </tr>
+            </table>
+
+            <p>
+                You can connect users which registered the old fashioned way, by giving them the following option to connect.
+                Note that we explitly indicate that we are connecting using the connect_facebook=1 value.
+            </p>
+            <form action="{% url 'facebook_connect' %}?facebook_login=1" method="post">
+                <a href="javascript:void(0);" onclick="F.connect(this.parentNode);">Connect this account to Facebook</a> (used to connect non facebook accounts)
+                <input type="hidden" value="{{ request.path }}" name="next" />
+                <input type="hidden" name="connect_facebook" value="1">
+                {% csrf_token %}
+            </form>
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock content %}
